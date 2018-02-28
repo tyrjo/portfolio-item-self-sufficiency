@@ -7,6 +7,7 @@ Ext.define("CArABU.app.TSApp", {
             xtype: 'panel',
             itemId: 'navigationPanel',
             padding: '0 0 10 0',
+            autoScroll: true,
             bodyPadding: 5,
             split: true,
             width: "50%",
@@ -15,6 +16,7 @@ Ext.define("CArABU.app.TSApp", {
         {
             xtype: 'panel',
             itemId: 'chartPanel',
+            autoScroll: true,
             layout: 'vbox',
             items: [{
                 xtype: 'panel',
@@ -174,10 +176,11 @@ Ext.define("CArABU.app.TSApp", {
             chartConfig: {
                 chart: {
                     type: 'pie',
+                    height: "400",
                 },
                 plotOptions: {
                     pie: {
-                        size: '80%',
+                        size: '75%',
                     }
                 },
                 subtitle: {
