@@ -59,70 +59,71 @@ Ext.define("CArABU.app.TSApp", {
     addItemSelector: function(piType) {
         if (piType) {
             Ext.create('Rally.data.wsapi.TreeStoreBuilder').build({
-                models: [piType.get('TypePath')],
-                autoLoad: true,
-                enableHierarchy: true
-            }).then({
-                scope: this,
-                success: function(store) {
-                    var navPanel = this.down('#navigationPanel');
-                    if (this.itemSelector) {
-                        navPanel.remove(this.itemSelector);
+                    models: 'Project',
+                    autoLoad: true,
+                    enableHierarchy: true
+                })
+                .then({
+                    scope: this,
+                    success: function(store) {
+                        var navPanel = this.down('#navigationPanel');
+                        if (this.itemSelector) {
+                            navPanel.remove(this.itemSelector);
+                        }
+                        this.itemSelector = navPanel.add({
+                            items: [{
+                                xtype: 'rallyprojecttree',
+                                columnCfgs: [
+                                    'Name',
+                                    'Project',
+                                    {
+                                        text: 'Self-Sufficiency By Story Count',
+                                        dataIndex: 'ObjectID',
+                                        sortable: false,
+                                        scope: this,
+                                        renderer: function(value, meta, record) {
+                                            var part = record.get('InDescendentProjectStoryCount');
+                                            var whole = record.get('TotalStoryCount');
+                                            return this.percentRenderer(part, whole);
+                                        }
+                                    },
+                                    {
+                                        text: 'Self-Sufficiency By Story Points',
+                                        dataIndex: 'ObjectID',
+                                        sortable: false,
+                                        scope: this,
+                                        renderer: function(value, meta, record) {
+                                            var part = record.get('InDescendentProjectPoints');
+                                            var whole = record.get('TotalPoints');
+                                            return this.percentRenderer(part, whole);
+                                        }
+                                    }
+                                ],
+                                enableBulkEdit: false,
+                                enableColumnHide: true,
+                                enableColumnMove: true,
+                                enableColumnResize: true,
+                                enableEditing: false,
+                                enableInlineAdd: false,
+                                enableRanking: false,
+                                shouldShowRowActionsColumn: false,
+                                store: store,
+                                fetch: ['ObjectID'],
+                                listeners: {
+                                    scope: this,
+                                    load: function(store, node, records) {
+                                        _.forEach(records, function(record) {
+                                            TsMetricsMgr.updateSelfSufficiency(record);
+                                        })
+                                    },
+                                    itemselected: function(record) {
+                                        this.drawCharts(record);
+                                    }
+                                }
+                            }],
+                        });
                     }
-                    this.itemSelector = navPanel.add({
-                        items: [{
-                            xtype: 'rallytreegrid',
-                            columnCfgs: [
-                                'Name',
-                                'Project',
-                                {
-                                    text: 'Self-Sufficiency By Story Count',
-                                    dataIndex: 'ObjectID',
-                                    sortable: false,
-                                    scope: this,
-                                    renderer: function(value, meta, record) {
-                                        var part = record.get('InDescendentProjectStoryCount');
-                                        var whole = record.get('TotalStoryCount');
-                                        return this.percentRenderer(part, whole);
-                                    }
-                                },
-                                {
-                                    text: 'Self-Sufficiency By Story Points',
-                                    dataIndex: 'ObjectID',
-                                    sortable: false,
-                                    scope: this,
-                                    renderer: function(value, meta, record) {
-                                        var part = record.get('InDescendentProjectPoints');
-                                        var whole = record.get('TotalPoints');
-                                        return this.percentRenderer(part, whole);
-                                    }
-                                }
-                            ],
-                            enableBulkEdit: false,
-                            enableColumnHide: true,
-                            enableColumnMove: true,
-                            enableColumnResize: true,
-                            enableEditing: false,
-                            enableInlineAdd: false,
-                            enableRanking: false,
-                            shouldShowRowActionsColumn: false,
-                            store: store,
-                            fetch: ['ObjectID'],
-                            listeners: {
-                                scope: this,
-                                load: function(store, node, records) {
-                                    _.forEach(records, function(record) {
-                                        TsMetricsMgr.updateSelfSufficiency(record);
-                                    })
-                                },
-                                itemclick: function(tree, record) {
-                                    this.drawCharts(record);
-                                }
-                            }
-                        }],
-                    });
-                }
-            });
+                });
         }
     },
 
