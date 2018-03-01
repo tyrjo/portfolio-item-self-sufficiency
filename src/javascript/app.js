@@ -6,27 +6,45 @@ Ext.define("CArABU.app.TSApp", {
     items: [{
             xtype: 'panel',
             itemId: 'navigationPanel',
+            title: TsConstants.LABEL.SELECT_PROJECT,
             padding: '0 0 10 0',
             autoScroll: true,
             bodyPadding: 5,
             split: true,
             width: "50%",
-            region: 'west'
+            region: 'west',
+            items: [{
+                items: [{
+                    xtype: 'rallyprojecttree',
+                    itemId: TsConstants.ID.SELECT_PROJECT_CONTROL,
+                    stateful: true,
+                    stateId: TsConstants.ID.ITEM_SELECTOR_STATE,
+                }],
+            }]
         },
         {
             xtype: 'panel',
-            itemId: 'chartPanel',
+            itemId: 'resultPanel',
+            title: TsConstants.LABEL.CHART_AREA_TITLE,
             autoScroll: true,
             layout: 'vbox',
-            items: [{
-                xtype: 'panel',
-                itemId: 'selectLabel',
-                padding: '20 20 20 20',
-                width: 200,
-                border: false,
-                html: 'Select an item on the left...'
-            }],
             region: 'center',
+            items: [
+                // pi type selection control here,
+                {
+                    xtype: 'container',
+                    itemId: 'chartPanel',
+                    layout: 'vbox',
+                    items: [{
+                        xtype: 'container',
+                        itemId: 'selectLabel',
+                        padding: '100 20 20 20',
+                        width: 200,
+                        border: false,
+                        html: TsConstants.LABEL.SELECT_ITEM
+                    }],
+                }
+            ],
         }
     ],
 
@@ -37,64 +55,50 @@ Ext.define("CArABU.app.TSApp", {
     },
 
     launch: function() {
-        //var chartPanel = this.down('#selectLabel').center();
-        this.addPiTypeSelector();
-    },
-
-    addPiTypeSelector: function() {
-        var navPanel = this.down('#navigationPanel');
-        navPanel.add({
+        this.down('#resultPanel').insert(0, {
             xtype: 'rallyportfolioitemtypecombobox',
+            itemId: TsConstants.ID.SELECT_PI_TYPE_CONTROL,
             fieldLabel: TsConstants.LABEL.PI_TYPE,
-            labelWidth: 150,
+            labelWidth: 125,
+            padding: '10 10 10 10',
+            defaultSelectionPosition: 'last',
             listeners: {
                 scope: this,
-                change: function(combobox, newValue) {
-                    if (newValue) {
-                        this.addItemSelector(combobox.getSelectedType());
-                    }
-                }
+                change: this.onPiTypeChange,
+                ready: this.onPiTypeChange,
             }
         });
+
+        // Setup event listeners
+        this.down('#' + TsConstants.ID.SELECT_PROJECT_CONTROL)
+            .on('itemselected', this.onProjectChange, this);
+
     },
 
-    addItemSelector: function(piType) {
-        if (piType) {
-            Ext.create('Rally.data.wsapi.TreeStoreBuilder').build({
-                    models: 'Project',
-                    autoLoad: true,
-                    enableHierarchy: true
-                })
+    onProjectChange: function(item) {
+        var newValue = item.getRecord();
+        if (newValue != this.selectedProject) {
+            this.selectedProject = newValue;
+            this.updateMetrics();
+        }
+    },
+
+    onPiTypeChange: function(control) {
+        this.selectedPiType = control.getSelectedType();
+        this.updateMetrics();
+    },
+
+    updateMetrics: function() {
+        var chartPanel = this.down('#chartPanel');
+
+        if (this.selectedProject && this.selectedPiType) {
+            chartPanel.removeAll();
+            this.down('#resultPanel').setLoading(true);
+            TsMetricsMgr.updateFocus(this.selectedProject, this.selectedPiType)
                 .then({
                     scope: this,
-                    success: function(store) {
-                        var navPanel = this.down('#navigationPanel');
-                        if (this.itemSelector) {
-                            navPanel.remove(this.itemSelector);
-                        }
-                        this.itemSelector = navPanel.add({
-                            items: [{
-                                xtype: 'rallyprojecttree',
-                                stateful: true,
-                                stateId: TsConstants.ID.ITEM_SELECTOR_STATE,
-                                listeners: {
-                                    scope: this,
-                                    itemselected: function(item) {
-                                        var chartPanel = this.down('#chartPanel');
-                                        chartPanel.removeAll();
-                                        chartPanel.setLoading(true);
-                                        var record = item.getRecord()
-                                        TsMetricsMgr.updateFocus(record, piType)
-                                            .then({
-                                                scope: this,
-                                                success: function(result) {
-                                                    this.drawCharts(record);
-                                                }
-                                            });
-                                    }
-                                }
-                            }],
-                        });
+                    success: function(result) {
+                        this.drawCharts(this.selectedProject);
                     }
                 });
         }
@@ -110,7 +114,8 @@ Ext.define("CArABU.app.TSApp", {
         outsideProject = record.get('PisNotInProjectStoryPoints');
         total = record.get('TotalPoints');
         chartPanel.add(this.getChart(outsideProject, total, TsConstants.LABEL.BY_POINTS));
-        chartPanel.setLoading(false);
+
+        this.down('#resultPanel').setLoading(false);
     },
 
     getChart: function(outside, total, title) {
@@ -125,7 +130,7 @@ Ext.define("CArABU.app.TSApp", {
             loadMask: false,
             chartData: {
                 series: [{
-                    name: TsConstants.LABEL.PROJECT_SELF_SUFFICIENCY,
+                    //name: TsConstants.LABEL.CHART_SUBTITLE + ' ' + this.selectedPiType.get('Name'),
                     //colors: TsConstants.CHART.COLORS,
                     borderColor: '#000000',
                     dataLabels: {
@@ -155,7 +160,7 @@ Ext.define("CArABU.app.TSApp", {
                     }
                 },
                 subtitle: {
-                    text: TsConstants.LABEL.PROJECT_SELF_SUFFICIENCY
+                    text: TsConstants.LABEL.getChartSubtitle(this.selectedPiType.get('Name'))
                 },
                 title: {
                     text: title

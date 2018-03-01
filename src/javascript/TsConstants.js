@@ -2,19 +2,23 @@
 Ext.define("TsConstants", {
     statics: {
         ID: {
-            ITEM_STORE: 'ITEM_STORE',
-            SELECT_ITEM_CONTROL: 'SELECT_ITEM_CONTROL',
+            SELECT_PROJECT_CONTROL: 'SELECT_PROJECT_CONTROL',
+            SELECT_PI_TYPE_CONTROL: 'SELECT_ITEM_TYPE_CONTROL',
             ITEM_SELECTOR_STATE: 'ITEM_SELECTOR_STATE'
         },
         LABEL: {
-            PI_TYPE: 'Portfolio Item Type',
+            PI_TYPE: 'Group by Owners of',
+            SELECT_PROJECT: 'Projects',
+            CHART_AREA_TITLE: 'Portfolio Item Owner',
             WARNING_THRESHOLD: 'Minimum Desired Owned Item Focus',
-            PROJECT_SELF_SUFFICIENCY: 'Owned Item Focus',
-            INSIDE_PROJECT: 'Inside of Project',
-            OUTSIDE_PROJECT: 'Outside of Project',
+            getChartSubtitle: function(piTypeName) {
+                return 'Grouped by ' + piTypeName + ' owner'
+            },
+            INSIDE_PROJECT: 'Inside of Project Tree',
+            OUTSIDE_PROJECT: 'Outside of Project Tree',
             BY_POINTS: 'Story Points',
             BY_COUNT: 'Story Count',
-            SELECT_ITEM: 'Select an item on the left...'
+            SELECT_ITEM: 'Select a project on the left...'
         },
         SETTING: {
             WARNING_THRESHOLD: 'WARNING_THRESHOLD',
