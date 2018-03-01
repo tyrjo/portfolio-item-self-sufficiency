@@ -3,12 +3,13 @@ Ext.define("TsConstants", {
     statics: {
         ID: {
             ITEM_STORE: 'ITEM_STORE',
-            SELECT_ITEM_CONTROL: 'SELECT_ITEM_CONTROL'
+            SELECT_ITEM_CONTROL: 'SELECT_ITEM_CONTROL',
+            ITEM_SELECTOR_STATE: 'ITEM_SELECTOR_STATE'
         },
         LABEL: {
             PI_TYPE: 'Portfolio Item Type',
-            WARNING_THRESHOLD: 'Minimum Desired Self-Sufficiency',
-            PROJECT_SELF_SUFFICIENCY: 'Project Self-Sufficiency',
+            WARNING_THRESHOLD: 'Minimum Desired Owned Item Focus',
+            PROJECT_SELF_SUFFICIENCY: 'Owned Item Focus',
             INSIDE_PROJECT: 'Inside of Project',
             OUTSIDE_PROJECT: 'Outside of Project',
             BY_POINTS: 'Story Points',

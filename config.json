@@ -1,5 +1,5 @@
 {
-    "name": "portfolio-item-self-sufficiency",
+    "name": "portfolio-item-focus",
     "sdk": "2.1",
     "version": "1.0.1",
     "className": "CArABU.app.TSApp",
@@ -10,7 +10,7 @@
         "src/javascript/utils/__ts-utilities.js",
         "src/javascript/TsConstants.js",
         "src/javascript/TsUtils.js",
-        "src/javascript/TsSelfSufficiency.js",
+        "src/javascript/TsPiFocus.js",
         "src/javascript/TsMetricsMgr.js",
         "src/javascript/app.js"
     ]

@@ -75,51 +75,22 @@ Ext.define("CArABU.app.TSApp", {
                         this.itemSelector = navPanel.add({
                             items: [{
                                 xtype: 'rallyprojecttree',
-                                columnCfgs: [
-                                    'Name',
-                                    'Project',
-                                    {
-                                        text: 'Self-Sufficiency By Story Count',
-                                        dataIndex: 'ObjectID',
-                                        sortable: false,
-                                        scope: this,
-                                        renderer: function(value, meta, record) {
-                                            var part = record.get('InDescendentProjectStoryCount');
-                                            var whole = record.get('TotalStoryCount');
-                                            return this.percentRenderer(part, whole);
-                                        }
-                                    },
-                                    {
-                                        text: 'Self-Sufficiency By Story Points',
-                                        dataIndex: 'ObjectID',
-                                        sortable: false,
-                                        scope: this,
-                                        renderer: function(value, meta, record) {
-                                            var part = record.get('InDescendentProjectPoints');
-                                            var whole = record.get('TotalPoints');
-                                            return this.percentRenderer(part, whole);
-                                        }
-                                    }
-                                ],
-                                enableBulkEdit: false,
-                                enableColumnHide: true,
-                                enableColumnMove: true,
-                                enableColumnResize: true,
-                                enableEditing: false,
-                                enableInlineAdd: false,
-                                enableRanking: false,
-                                shouldShowRowActionsColumn: false,
-                                store: store,
-                                fetch: ['ObjectID'],
+                                stateful: true,
+                                stateId: TsConstants.ID.ITEM_SELECTOR_STATE,
                                 listeners: {
                                     scope: this,
-                                    load: function(store, node, records) {
-                                        _.forEach(records, function(record) {
-                                            TsMetricsMgr.updateSelfSufficiency(record);
-                                        })
-                                    },
-                                    itemselected: function(record) {
-                                        this.drawCharts(record);
+                                    itemselected: function(item) {
+                                        var chartPanel = this.down('#chartPanel');
+                                        chartPanel.removeAll();
+                                        chartPanel.setLoading(true);
+                                        var record = item.getRecord()
+                                        TsMetricsMgr.updateFocus(record, piType)
+                                            .then({
+                                                scope: this,
+                                                success: function(result) {
+                                                    this.drawCharts(record);
+                                                }
+                                            });
                                     }
                                 }
                             }],
@@ -131,20 +102,20 @@ Ext.define("CArABU.app.TSApp", {
 
     drawCharts: function(record) {
         var chartPanel = this.down('#chartPanel');
-        chartPanel.removeAll();
 
-        var insideProject = record.get('InDescendentProjectStoryCount');
+        var outsideProject = record.get('PisNotInProjectStoryCount');
         var total = record.get('TotalStoryCount');
-        chartPanel.add(this.getChart(insideProject, total, TsConstants.LABEL.BY_COUNT));
+        chartPanel.add(this.getChart(outsideProject, total, TsConstants.LABEL.BY_COUNT));
 
-        insideProject = record.get('InDescendentProjectPoints');
+        outsideProject = record.get('PisNotInProjectStoryPoints');
         total = record.get('TotalPoints');
-        chartPanel.add(this.getChart(insideProject, total, TsConstants.LABEL.BY_POINTS));
+        chartPanel.add(this.getChart(outsideProject, total, TsConstants.LABEL.BY_POINTS));
+        chartPanel.setLoading(false);
     },
 
-    getChart: function(inside, total, title) {
+    getChart: function(outside, total, title) {
         // Set a warning color if the percent inside the project is less than the warning threshold
-        var setWarning = (inside / total) * 100 < this.getSetting(TsConstants.SETTING.WARNING_THRESHOLD) ? true : false;
+        var setWarning = ((total - outside) / total) * 100 < this.getSetting(TsConstants.SETTING.WARNING_THRESHOLD) ? true : false;
         var pointFormatter = function() {
             return this.point.y + ' ' + this.point.name + '<br/><b>( ' + Math.round(this.point.percentage) + '% )</b>';
         };
@@ -164,11 +135,11 @@ Ext.define("CArABU.app.TSApp", {
                     data: [{
                         name: TsConstants.LABEL.INSIDE_PROJECT,
                         color: TsConstants.CHART.OK,
-                        y: inside,
+                        y: total - outside,
                     }, {
                         name: TsConstants.LABEL.OUTSIDE_PROJECT,
                         color: setWarning ? TsConstants.CHART.WARNING : TsConstants.CHART.NORMAL_1,
-                        y: total - inside
+                        y: outside
                     }],
                     enableMouseTracking: false
                 }]
